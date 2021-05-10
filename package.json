@@ -1,0 +1,30 @@
+{
+  "name": "@twometer/blaze",
+  "version": "1.0.0",
+  "description": "Incredibly fast YouTube downloader and synchronizer",
+  "main": "dist/app.js",
+  "scripts": {
+    "start": "tsc && node .",
+	"build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Twometer/blaze.git"
+  },
+  "keywords": [
+    "youtube",
+    "downloader",
+    "music",
+    "playlist"
+  ],
+  "author": "Twometer",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Twometer/blaze/issues"
+  },
+  "homepage": "https://github.com/Twometer/blaze#readme",
+  "devDependencies": {
+    "typescript": "^4.2.4"
+  }
+}
