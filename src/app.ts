@@ -1,62 +1,27 @@
 import chalk from 'chalk'
-import { Option, parse, program } from "commander";
-import { DownloadJob } from './download';
+import * as cli from "./cli"
+import { program } from "commander";
+import { DownloadBatcher, DownloadJob } from './download';
 import { ManifestIO, Quality, Format } from "./manifest";
 import { QuestionInterface } from "./question"
 import { parseUrl, UrlType } from "./youtube"
 
-program.version('1.0.0');
-
-program.command('sync')
-    .description('Synchronize the current directory using a manifest')
-    .option('-f, --file <path>', 'Override the path of the manifest')
-    .option('-d, --delete', "Delete local files that were deleted upstream")
-    .action(sync)
-
-program.command('download <link>')
-    .description('Download a single file or playlist')
-    .option('-o, --output <path>', 'Target directory or file', '.')
-    .action(download)
-
-program.command('init')
-    .description('Inits the current folder with a sync manifest')
-    .action(init);
-
-program.addOption(new Option('-F, --format <format>', 'Output file format')
-    .choices(['mp3', 'mp4'])
-    .default('mp4'));
-
-program.addOption(new Option('-Q, --quality <quality>', 'Download quality')
-    .choices(['normal', 'maxaudio', 'maxvideo'])
-    .default('normal'));
-
-program.addOption(new Option('-B, --batch <size>', 'Download batch size'));
-
-program.addHelpText('before', chalk.yellow('blaze 1.0.0\n'));
-
-program.addHelpText('after', `
-Try:
-  $ blaze download https://youtu.be/dQw4w9WgXcQ
-`)
-
-program.parse();
+cli.initialize(sync, download, init);
 
 async function sync() {
-    let opts = program.opts();
-    let manifest = ManifestIO.read(opts.path || './blaze.json');
-
-    let job = new DownloadJob();
-    job.add(manifest.playlist);
-
-
+    let manifest = ManifestIO.read(program.opts().path || './blaze.json');
+    download(manifest.playlist);
 }
 
 async function download(link: string) {
     let opts = program.opts();
-
     let job = new DownloadJob();
-    job.add(link);
-    
+    await job.add(link);
+
+    let batcher = new DownloadBatcher(opts.batchSize);
+    await batcher.download(job);
+
+    console.log(chalk.green('\nYou download completed successfully'));
 }
 
 async function init() {
