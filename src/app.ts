@@ -1,7 +1,9 @@
 import chalk from 'chalk'
-import readline from 'readline'
-import { Option, program } from "commander";
+import { Option, parse, program } from "commander";
+import { DownloadJob } from './download';
 import { ManifestIO, Quality, Format } from "./manifest";
+import { QuestionInterface } from "./question"
+import { parseUrl, UrlType } from "./youtube"
 
 program.version('1.0.0');
 
@@ -28,6 +30,8 @@ program.addOption(new Option('-Q, --quality <quality>', 'Download quality')
     .choices(['normal', 'maxaudio', 'maxvideo'])
     .default('normal'));
 
+program.addOption(new Option('-B, --batch <size>', 'Download batch size'));
+
 program.addHelpText('before', chalk.yellow('blaze 1.0.0\n'));
 
 program.addHelpText('after', `
@@ -37,40 +41,41 @@ Try:
 
 program.parse();
 
-function sync() {
+async function sync() {
     let opts = program.opts();
     let manifest = ManifestIO.read(opts.path || './blaze.json');
+
+    let job = new DownloadJob();
+    job.add(manifest.playlist);
+
+
 }
 
-function download(link: string) {
+async function download(link: string) {
     let opts = program.opts();
 
+    let job = new DownloadJob();
+    job.add(link);
+    
 }
 
-function init() {
-    let rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
+async function init() {
+    let iface = new QuestionInterface();
 
-    rl.question('Playlist Link: ', playlist => {
-        if (!playlist) {
-            console.log(chalk.red('\nerror: You must specify a playlist'));
-            rl.close();
-            return;
+    try {
+        let playlistUrl = await iface.question('Playlist URL');
+        if (parseUrl(playlistUrl).type != UrlType.Playlist) {
+            throw 'Not a valid YouTube playlist link';
         }
 
-        rl.question('File format [mp4]: ', format => {
-            format = format || 'mp4';
+        let format = await iface.question('File format', 'mp4');
+        let quality = await iface.question('Quality', 'normal');
 
-            rl.question('Download quality [normal]: ', quality => {
-                quality = quality || 'normal';
-
-                ManifestIO.write('./blaze.json', playlist, quality as Quality, format as Format);
-                console.log(chalk.green('\nSuccessfully created a new sync manifest as blaze.json'));
-                rl.close();
-            })
-        })
-    });
+        ManifestIO.write('./blaze.json', playlistUrl, quality as Quality, format as Format);
+        console.log(chalk.green('\nSuccessfully created a new sync manifest as blaze.json'));
+    } catch (e) {
+        console.log(chalk.red('\nerror: ' + e));
+    }
+    iface.close();
 }
 
