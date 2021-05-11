@@ -1,7 +1,8 @@
 import chalk from 'chalk'
 import * as cli from "./cli"
+import ora from "ora"
 import { program } from "commander";
-import { DownloadBatcher, DownloadJob } from './download';
+import { DownloadBatcher, VideoList } from './download';
 import { ManifestIO, Quality, Format } from "./manifest";
 import { QuestionInterface } from "./question"
 import { parseUrl, UrlType } from "./youtube"
@@ -16,19 +17,24 @@ async function sync() {
 async function download(link: string, format?: Format, quality?: Quality) {
     let opts = program.opts();
 
-    let job = new DownloadJob();
-    await job.add(link);
+    let startTime = Date.now();
+
+    let spinner = ora('Building video list...').start();
+    let list = new VideoList();
+    await list.add(link);
+    spinner.succeed(`Loaded ${list.videos().length} video(s)`);
 
     let batcher = new DownloadBatcher({
         targetDir: opts.dir,
         batchSize: opts.batch,
-        format: opts.format || format || Format.mp3,
+        format: opts.format || format || Format.mp4,
         quality: opts.quality || quality || Quality.normal,
         deleteLocal: opts.delete || false
     });
-    await batcher.download(job);
+    await batcher.download(list);
 
-    console.log(chalk.green('\nYour download completed successfully'));
+    let duration = (Date.now() - startTime) / 1000;
+    console.log(chalk.green(`\nSuccessfully downloaded ${list.videos().length} video(s) in ${duration} seconds`));
 }
 
 async function init() {

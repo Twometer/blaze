@@ -1,7 +1,13 @@
+import fs from 'fs'
+import ytdl from 'ytdl-core'
+import path from 'path'
+import chalk from 'chalk';
+import cliProgress from 'cli-progress'
 import { Format, Quality } from "./manifest";
 import { getVideoTitle, loadPlaylist, parseUrl, UrlType, YouTubeVideo } from "./youtube";
+import { Scheduler, Worker } from './scheduler';
 
-export class DownloadJob {
+export class VideoList {
 
     private videoList: Array<YouTubeVideo> = [];
 
@@ -49,9 +55,83 @@ export class DownloadBatcher {
         return `https://youtube.com/watch?v=${videoId}`;
     }
 
-    async download(job: DownloadJob) {
-        //console.log('Options:', this.options);
-        //console.log('Job: ', job);
+    private escapePath(videoTitle: string): string {
+        return videoTitle.replace(/(\\|\/|:|\*|\?|"|<|>|\|)/g, '');
     }
 
+    private runJob(job: DownloadJob, worker: Worker, finish: () => void) {
+        worker.bar.start(1, 0, {
+            title: 'preparing...'
+        });
+
+        const stream = ytdl(this.idToUrl(job.video.id), {
+            filter: job.config.filter as ytdl.Filter,
+            quality: job.config.quality
+        });
+        stream.pipe(fs.createWriteStream(path.resolve(this.options.targetDir, `${this.escapePath(job.video.title)}.${job.config.extension}`)));
+
+        stream.on('progress', (chunk, downloaded, total) => {
+            worker.bar.setTotal(total);
+            worker.bar.update(downloaded, { title: job.video.title });
+        });
+
+        stream.on('end', () => {
+            finish();
+        });
+    }
+
+    async download(list: VideoList) {
+        console.log("\nDownloading videos...");
+
+        let multibar = new cliProgress.MultiBar({
+            format: ` ${chalk.greenBright('{bar} {percentage}%')} | ETA: {eta} s | {title}`,
+            clearOnComplete: false,
+            hideCursor: true
+        }, cliProgress.Presets.rect);
+
+        let requiredWorkers = Math.min(list.videos().length, this.options.batchSize);
+        let scheduler = new Scheduler(requiredWorkers, multibar);
+
+        let ytdlConfig = new YtdlConfig(this.options);
+
+        let videos = list.videos();
+        for (let video of videos) {
+            let job = new DownloadJob(video, ytdlConfig);
+            scheduler.schedule(this.runJob.bind(this), job);
+        }
+
+        await scheduler.awaitAll();
+
+        multibar.stop();
+    }
+
+}
+
+class DownloadJob {
+    video: YouTubeVideo;
+    config: YtdlConfig;
+
+    constructor(video: YouTubeVideo, config: YtdlConfig) {
+        this.video = video;
+        this.config = config;
+    }
+}
+
+class YtdlConfig {
+    extension: string = 'mp4';
+    quality: string = 'highest';
+    filter: string = 'videoandaudio';
+
+    constructor(options: DownloadOptions) {
+        if (options.quality == Quality.maxaudio) {
+            this.quality = 'highestaudio';
+        } else if (options.quality == Quality.maxvideo) {
+            this.quality = 'highestvideo';
+        }
+
+        if (options.format == Format.mp3) {
+            this.filter = 'audioonly';
+            this.extension = 'mp3';
+        }
+    }
 }

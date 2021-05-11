@@ -23,7 +23,6 @@ export function initialize(sync: any, download: any, init: any) {
     program.addOption(new Option('-B, --batch <size>', 'Number of concurrent downloads').default(4));
     program.addOption(new Option('-D, --dir <path>', 'Target directory').default('.'))
 
-    program.addHelpText('before', chalk.yellow('blaze 1.0.0\n'));
     program.addHelpText('after', `
 Try:
   $ blaze download https://youtu.be/dQw4w9WgXcQ
