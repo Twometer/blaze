@@ -65,14 +65,14 @@ export class DownloadBatcher {
         });
 
         let dstFilePath = path.resolve(this.options.targetDir, `${this.escapePath(job.video.title)}.${job.config.extension}`);
-        if (fs.statSync(dstFilePath).isFile()) {
+        if (fs.existsSync(dstFilePath)) {
             setTimeout(() => {
                 worker.bar.update(100, { title: job.video.title });
                 finish();
             }, 10);
             return;
         }
-        
+
         const stream = ytdl(this.idToUrl(job.video.id), {
             filter: job.config.filter as ytdl.Filter,
             quality: job.config.quality
@@ -97,12 +97,16 @@ export class DownloadBatcher {
             hideCursor: true
         }, cliProgress.Presets.rect);
 
+        let videos = list.videos();
+        let masterBar = multibar.create(videos.length, 0, { title: chalk.greenBright('TOTAL PROGRESS') });
         let requiredWorkers = Math.min(list.videos().length, this.options.batchSize);
         let scheduler = new Scheduler(requiredWorkers, multibar);
 
+        scheduler.emitter.on('finished', () => {
+            masterBar.increment();
+        });
+        
         let ytdlConfig = new YtdlConfig(this.options);
-
-        let videos = list.videos();
         for (let video of videos) {
             let job = new DownloadJob(video, ytdlConfig);
             await scheduler.schedule(this.runJob.bind(this), job);

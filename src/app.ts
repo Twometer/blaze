@@ -40,7 +40,7 @@ async function download(link: string, format?: Format, quality?: Quality) {
     await batcher.download(list);
 
     let duration = (Date.now() - startTime) / 1000;
-    console.log(chalk.green(`\nSuccessfully downloaded ${list.videos().length} video(s) in ${duration} seconds`));
+    console.log(chalk.green(`\nSuccessfully synchronized ${list.videos().length} video(s) in ${duration} seconds`));
 }
 
 async function init() {
