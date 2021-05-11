@@ -21,8 +21,14 @@ async function download(link: string, format?: Format, quality?: Quality) {
 
     let spinner = ora('Building video list...').start();
     let list = new VideoList();
-    await list.add(link);
-    spinner.succeed(`Loaded ${list.videos().length} video(s)`);
+    try {
+        await list.add(link);
+        spinner.succeed(`Loaded ${list.videos().length} video(s)`);
+    } catch {
+        spinner.fail('Failed to load videos. Make sure that the video or playlist exists.')
+        return;
+    }
+
 
     let batcher = new DownloadBatcher({
         targetDir: opts.dir,

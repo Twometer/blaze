@@ -97,7 +97,7 @@ export class DownloadBatcher {
         let videos = list.videos();
         for (let video of videos) {
             let job = new DownloadJob(video, ytdlConfig);
-            scheduler.schedule(this.runJob.bind(this), job);
+            await scheduler.schedule(this.runJob.bind(this), job);
         }
 
         await scheduler.awaitAll();
