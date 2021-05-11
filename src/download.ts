@@ -64,11 +64,20 @@ export class DownloadBatcher {
             title: 'preparing...'
         });
 
+        let dstFilePath = path.resolve(this.options.targetDir, `${this.escapePath(job.video.title)}.${job.config.extension}`);
+        if (fs.statSync(dstFilePath).isFile()) {
+            setTimeout(() => {
+                worker.bar.update(100, { title: job.video.title });
+                finish();
+            }, 10);
+            return;
+        }
+        
         const stream = ytdl(this.idToUrl(job.video.id), {
             filter: job.config.filter as ytdl.Filter,
             quality: job.config.quality
         });
-        stream.pipe(fs.createWriteStream(path.resolve(this.options.targetDir, `${this.escapePath(job.video.title)}.${job.config.extension}`)));
+        stream.pipe(fs.createWriteStream(dstFilePath));
 
         stream.on('progress', (chunk, downloaded, total) => {
             worker.bar.setTotal(total);
@@ -82,7 +91,6 @@ export class DownloadBatcher {
 
     async download(list: VideoList) {
         console.log("\nDownloading videos...");
-
         let multibar = new cliProgress.MultiBar({
             format: ` ${chalk.greenBright('{bar} {percentage}%')} | ETA: {eta} s | {title}`,
             clearOnComplete: false,
