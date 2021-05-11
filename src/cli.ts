@@ -2,7 +2,7 @@ import chalk from 'chalk'
 import { Option, program } from "commander";
 
 export function initialize(sync: any, download: any, init: any) {
-    program.version('1.0.0');
+    program.version('1.0.1');
 
     program.command('sync')
         .description('Synchronize the directory using its manifest')

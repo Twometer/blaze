@@ -1,6 +1,6 @@
 {
   "name": "@twometer/blaze",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Incredibly fast YouTube downloader and synchronizer",
   "main": "dist/app.js",
   "preferGlobal": true,

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import chalk from 'chalk'
 import * as cli from "./cli"
 import ora from "ora"
