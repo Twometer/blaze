@@ -20,7 +20,7 @@ export function initialize(sync: any, download: any, init: any) {
         .choices(['mp3', 'mp4']));
     program.addOption(new Option('-Q, --quality <quality>', 'Download quality')
         .choices(['normal', 'maxaudio', 'maxvideo']));
-    program.addOption(new Option('-B, --batch <size>', 'Number of concurrent downloads').default(4));
+    program.addOption(new Option('-B, --batch <size>', 'Number of concurrent downloads').default(8));
     program.addOption(new Option('-D, --dir <path>', 'Target directory').default('.'))
 
     program.addHelpText('after', `
