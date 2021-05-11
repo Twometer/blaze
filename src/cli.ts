@@ -7,7 +7,6 @@ export function initialize(sync: any, download: any, init: any) {
     program.command('sync')
         .description('Synchronize the directory using its manifest')
         .option('-f, --file <path>', 'Override the path of the manifest')
-        .option('-d, --delete', "Delete local files that were deleted upstream")
         .action(sync)
     program.command('download <link>')
         .description('Download a single file or playlist')
