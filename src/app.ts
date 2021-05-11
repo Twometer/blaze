@@ -1,27 +1,33 @@
 import chalk from 'chalk'
 import * as cli from "./cli"
-import { program } from "commander";
+import { opts, program } from "commander";
 import { DownloadBatcher, DownloadJob } from './download';
 import { ManifestIO, Quality, Format } from "./manifest";
 import { QuestionInterface } from "./question"
 import { parseUrl, UrlType } from "./youtube"
 
-cli.initialize(sync, download, init);
+cli.initialize(sync, (link: string) => download(link), init);
 
 async function sync() {
     let manifest = ManifestIO.read(program.opts().path || './blaze.json');
-    download(manifest.playlist);
+    download(manifest.playlist, manifest.format, manifest.quality);
 }
 
-async function download(link: string) {
+async function download(link: string, format?: Format, quality?: Quality) {
     let opts = program.opts();
     let job = new DownloadJob();
     await job.add(link);
 
-    let batcher = new DownloadBatcher(opts.batchSize);
+    let batcher = new DownloadBatcher({
+        targetDir: opts.dir,
+        batchSize: opts.batch,
+        format: opts.format || format || Format.mp3,
+        quality: opts.quality || quality || Quality.normal,
+        deleteLocal: opts.delete || false
+    });
     await batcher.download(job);
 
-    console.log(chalk.green('\nYou download completed successfully'));
+    console.log(chalk.green('\nYour download completed successfully'));
 }
 
 async function init() {

@@ -1,3 +1,4 @@
+import { Format, Quality } from "./manifest";
 import { loadPlaylist, parseUrl, UrlType, YouTubeVideo } from "./youtube";
 
 export class DownloadJob {
@@ -24,16 +25,25 @@ export class DownloadJob {
 
 }
 
+export interface DownloadOptions {
+    targetDir: string,
+    batchSize: number,
+    format: Format,
+    quality: Quality,
+    deleteLocal: boolean
+}
+
 export class DownloadBatcher {
 
-    batchSize: number;
+    options: DownloadOptions;
 
-    constructor(batchSize: number) {
-        this.batchSize = batchSize;
+    constructor(options: DownloadOptions) {
+        this.options = options;
     }
 
     async download(job: DownloadJob) {
-        
+        console.log('Options:', this.options);
+        console.log('Job: ', job);
     }
 
 }
