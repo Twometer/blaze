@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { decode } from 'html-entities';
 
 export enum UrlType {
     Unknown,
@@ -45,6 +46,12 @@ export function parseUrl(urlString: string): YouTubeUrl {
         // Not even a valid URL
         return { type: UrlType.Invalid, id: null };
     }
+}
+
+function findData(inputData: string, after: string, before: string): string {
+    let outputData = inputData.substr(inputData.indexOf(after) + after.length);
+    outputData = outputData.substr(0, outputData.indexOf(before));
+    return outputData;
 }
 
 function findJsonData(inputData: string, after: string, before: string) {
@@ -111,4 +118,9 @@ export async function loadPlaylist(playlistId: string) {
     }
 
     return playlist;
+}
+
+export async function getVideoTitle(videoId: string) {
+    let data = (await axios.get(`https://www.youtube.com/watch?v=${videoId}`)).data;
+    return decode(findData(data, '<meta name="title" content="', '">'));
 }

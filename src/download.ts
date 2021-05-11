@@ -1,26 +1,30 @@
 import { Format, Quality } from "./manifest";
-import { loadPlaylist, parseUrl, UrlType, YouTubeVideo } from "./youtube";
+import { getVideoTitle, loadPlaylist, parseUrl, UrlType, YouTubeVideo } from "./youtube";
 
 export class DownloadJob {
 
-    videos: Array<string> = [];
-
-    private idToUrl(videoId: string): string {
-        return `https://youtube.com/watch?v=${videoId}`;
-    }
+    private videoList: Array<YouTubeVideo> = [];
 
     async add(url: string) {
         let parsed = parseUrl(url);
 
         if (parsed.type == UrlType.Playlist) {
             let videos = await loadPlaylist(parsed.id!!);
-            videos.map(v => this.idToUrl(v.id))
-                .forEach(v => this.videos.push(v));
+            for (let video of videos)
+                this.videoList.push(video);
         } else if (parsed.type == UrlType.Video) {
-            this.videos.push(this.idToUrl(parsed.id!!));
+            let video = await getVideoTitle(parsed.id!!)
+            this.videoList.push({
+                id: parsed.id!!,
+                title: video
+            });
         } else {
             throw 'Invalid url'
         }
+    }
+
+    videos(): Array<YouTubeVideo> {
+        return this.videoList;
     }
 
 }
@@ -41,9 +45,13 @@ export class DownloadBatcher {
         this.options = options;
     }
 
+    private idToUrl(videoId: string): string {
+        return `https://youtube.com/watch?v=${videoId}`;
+    }
+
     async download(job: DownloadJob) {
-        console.log('Options:', this.options);
-        console.log('Job: ', job);
+        //console.log('Options:', this.options);
+        //console.log('Job: ', job);
     }
 
 }

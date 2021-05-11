@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import * as cli from "./cli"
-import { opts, program } from "commander";
+import { program } from "commander";
 import { DownloadBatcher, DownloadJob } from './download';
 import { ManifestIO, Quality, Format } from "./manifest";
 import { QuestionInterface } from "./question"
@@ -15,6 +15,7 @@ async function sync() {
 
 async function download(link: string, format?: Format, quality?: Quality) {
     let opts = program.opts();
+
     let job = new DownloadJob();
     await job.add(link);
 
